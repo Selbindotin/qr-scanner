@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>QR Code Scanner</title>
   <style>
     * {
@@ -13,7 +13,7 @@
     body {
       margin: 0;
       background: #0f172a;
-      color: #fff;
+      color: white;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -38,14 +38,12 @@
       box-shadow: 0 0 20px rgba(0,255,128,0.2);
     }
 
-    /* Popup Modal */
+    /* Modal Style */
     .modal {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(15, 23, 42, 0.85);
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(15, 23, 42, 0.9);
       backdrop-filter: blur(4px);
       display: none;
       align-items: center;
@@ -86,8 +84,8 @@
     }
 
     @keyframes popIn {
-      from { opacity: 0; transform: scale(0.95);}
-      to { opacity: 1; transform: scale(1);}
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
     }
   </style>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -100,7 +98,7 @@
   <!-- Modal Popup -->
   <div class="modal" id="popup">
     <div class="modal-content">
-      <p id="qr-text">Scanned QR code text here</p>
+      <p id="qr-text">Scanned text here</p>
       <button class="btn" onclick="handleOpen()">Open</button>
       <button class="btn" onclick="handleCopy()">Copy</button>
     </div>
@@ -108,6 +106,7 @@
 
   <script>
     let scannedText = "";
+    let html5QrcodeScanner;
 
     function showPopup(text) {
       scannedText = text;
@@ -117,35 +116,50 @@
 
     function hidePopup() {
       document.getElementById("popup").style.display = "none";
+      scannedText = "";
+
+      // Restart the scanner
+      html5QrcodeScanner.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 }
+        },
+        onScanSuccess
+      ).catch(err => {
+        console.error("Failed to restart scanner:", err);
+      });
     }
 
     function onScanSuccess(decodedText, decodedResult) {
       if (decodedText !== scannedText) {
         scannedText = decodedText;
         showPopup(decodedText);
-        html5QrcodeScanner.clear();
+        html5QrcodeScanner.clear(); // stop camera
       }
     }
 
-    const html5QrcodeScanner = new Html5Qrcode("reader");
-
-    html5QrcodeScanner.start(
-      { facingMode: "environment" },
-      {
-        fps: 10,
-        qrbox: { width: 250, height: 250 }
-      },
-      onScanSuccess
-    ).catch(err => {
-      alert("Camera access denied or error occurred.");
-      console.error(err);
-    });
+    // Start scanner on load
+    window.onload = function() {
+      html5QrcodeScanner = new Html5Qrcode("reader");
+      html5QrcodeScanner.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 }
+        },
+        onScanSuccess
+      ).catch(err => {
+        alert("Camera access denied or error occurred.");
+        console.error(err);
+      });
+    };
 
     function handleOpen() {
       if (scannedText.startsWith("http")) {
         window.open(scannedText, "_blank");
       } else {
-        alert("This doesn't appear to be a valid link.");
+        alert("Not a valid URL.");
       }
     }
 
@@ -155,7 +169,7 @@
       });
     }
 
-    // Hide popup on outside tap
+    // Tap outside modal to close
     document.getElementById("popup").addEventListener("click", function (e) {
       if (e.target.id === "popup") hidePopup();
     });
