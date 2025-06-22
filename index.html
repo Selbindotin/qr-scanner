@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QR Scanner</title>
+  <title>QR Code Scanner</title>
   <style>
     * {
       box-sizing: border-box;
@@ -12,50 +12,70 @@
 
     body {
       margin: 0;
-      padding: 0;
       background: #0f172a;
       color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: start;
-      height: 100vh;
+      min-height: 100vh;
     }
 
     header {
+      width: 100%;
       padding: 1rem;
       font-size: 1.5rem;
       text-align: center;
       background: #1e293b;
-      width: 100%;
       box-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
 
     #reader {
       width: 100%;
       max-width: 400px;
-      margin-top: 2rem;
-      border-radius: 10px;
+      margin: 2rem auto;
+      border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 0 20px rgba(0,255,128,0.3);
+      box-shadow: 0 0 20px rgba(0,255,128,0.2);
     }
 
-    .result-box {
-      margin-top: 2rem;
+    /* Popup Modal */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    .modal-content {
       background: #1e293b;
-      padding: 1rem;
-      border-radius: 10px;
+      padding: 2rem;
+      border-radius: 12px;
+      max-width: 90%;
       text-align: center;
-      animation: fadeIn 0.5s ease-in-out;
+      animation: popIn 0.3s ease;
+    }
+
+    .modal p {
+      word-break: break-word;
+      margin-bottom: 1.5rem;
+      font-size: 1.1rem;
     }
 
     .btn {
-      margin-top: 1rem;
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 9999px;
+      display: inline-block;
+      margin: 0.5rem;
+      padding: 0.8rem 1.5rem;
       background-color: #10b981;
       color: white;
+      border: none;
+      border-radius: 9999px;
       font-size: 1rem;
       cursor: pointer;
       transition: background 0.3s ease;
@@ -65,9 +85,9 @@
       background-color: #059669;
     }
 
-    @keyframes fadeIn {
-      from {opacity: 0; transform: translateY(10px);}
-      to {opacity: 1; transform: translateY(0);}
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.95);}
+      to { opacity: 1; transform: scale(1);}
     }
   </style>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -77,20 +97,32 @@
 
   <div id="reader"></div>
 
-  <div id="result" class="result-box" style="display:none;">
-    <p id="qr-text"></p>
-    <button class="btn" onclick="handleOpen()">Open</button>
-    <button class="btn" onclick="handleCopy()">Copy</button>
+  <!-- Modal Popup -->
+  <div class="modal" id="popup">
+    <div class="modal-content">
+      <p id="qr-text">Scanned QR code text here</p>
+      <button class="btn" onclick="handleOpen()">Open</button>
+      <button class="btn" onclick="handleCopy()">Copy</button>
+    </div>
   </div>
 
   <script>
     let scannedText = "";
 
+    function showPopup(text) {
+      scannedText = text;
+      document.getElementById("qr-text").innerText = text;
+      document.getElementById("popup").style.display = "flex";
+    }
+
+    function hidePopup() {
+      document.getElementById("popup").style.display = "none";
+    }
+
     function onScanSuccess(decodedText, decodedResult) {
       if (decodedText !== scannedText) {
         scannedText = decodedText;
-        document.getElementById("qr-text").innerText = decodedText;
-        document.getElementById("result").style.display = "block";
+        showPopup(decodedText);
         html5QrcodeScanner.clear();
       }
     }
@@ -105,7 +137,7 @@
       },
       onScanSuccess
     ).catch(err => {
-      alert("Camera access denied or error occurred");
+      alert("Camera access denied or error occurred.");
       console.error(err);
     });
 
@@ -113,7 +145,7 @@
       if (scannedText.startsWith("http")) {
         window.open(scannedText, "_blank");
       } else {
-        alert("Not a valid URL");
+        alert("This doesn't appear to be a valid link.");
       }
     }
 
@@ -122,6 +154,11 @@
         alert("Copied to clipboard!");
       });
     }
+
+    // Hide popup on outside tap
+    document.getElementById("popup").addEventListener("click", function (e) {
+      if (e.target.id === "popup") hidePopup();
+    });
   </script>
 </body>
 </html>
